@@ -17,21 +17,6 @@ namespace WpfApp2
             InitializeComponent();
         }
 
-        private void ButtonControl_Click(object sender, RoutedEventArgs e)
-        {
-            var report = new StiReport();
-            report.Load(@"Reports\SimpleList.mrt");
-            report.Render();
-            StiWpfViewerControl1.Report = report;
-        }
-
-        private void ButtonDialog_Click(object sender, RoutedEventArgs e)
-        {
-            var report = new StiReport();
-            report.Load(@"Reports\SimpleList.mrt");
-            report.ShowWithWpf();
-        }
-
         private async void ButtonSaveAsJson_Click(object sender, RoutedEventArgs e)
         {
             if (StiWpfViewerControl1.Report == null)
@@ -48,7 +33,8 @@ namespace WpfApp2
                 string JsonReport = StiWpfViewerControl1.Report.SaveDocumentJsonToString();
                 using (var writer = new StreamWriter(File.OpenWrite(saveFileDialog.FileName)))
                 {
-                    await writer.WriteAsync(JsonReport);                  
+                    try { await writer.WriteAsync(JsonReport); }
+                    catch(Exception exception) { MessageBox.Show(exception.Message,"File writing failed.", MessageBoxButton.OK, MessageBoxImage.Error); }
                 }
             }
         }
@@ -64,7 +50,8 @@ namespace WpfApp2
                 string JsonReport = string.Empty;
                 using (var reader = new StreamReader(File.OpenRead(openFileDialog.FileName)))
                 {
-                    JsonReport = reader.ReadToEnd();
+                    try { JsonReport = reader.ReadToEnd(); }
+                    catch(Exception exception) { MessageBox.Show(exception.Message, "File reading failed.", MessageBoxButton.OK, MessageBoxImage.Error); return; }
                 }
                 report.LoadDocumentFromJson(JsonReport);
                 StiWpfViewerControl1.Report = report;
@@ -90,9 +77,27 @@ namespace WpfApp2
             saveFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             if (saveFileDialog.ShowDialog() == true)
             {
-                await report.ExportDocumentAsync(StiExportFormat.Pdf, File.OpenWrite(saveFileDialog.FileName));
+                try { await report.ExportDocumentAsync(StiExportFormat.Pdf, File.OpenWrite(saveFileDialog.FileName)); }
+                catch(Exception exception) { MessageBox.Show(exception.Message, "Report exporting failed.", MessageBoxButton.OK, MessageBoxImage.Error); }
             }                
             
         }
+
+        #region unuse code
+        private void ButtonControl_Click(object sender, RoutedEventArgs e)
+        {
+            var report = new StiReport();
+            report.Load(@"Reports\SimpleList.mrt");
+            report.Render();
+            StiWpfViewerControl1.Report = report;
+        }
+
+        private void ButtonDialog_Click(object sender, RoutedEventArgs e)
+        {
+            var report = new StiReport();
+            report.Load(@"Reports\SimpleList.mrt");
+            report.ShowWithWpf();
+        }
+        #endregion
     }
 }
